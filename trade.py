@@ -14,8 +14,9 @@ def solve(index: str) -> float:
     data = tv.get_hist(symbol= index, exchange='BYBIT', interval=Interval.in_1_minute, n_bars=1500)
     # print(data)
     sma = abstract.NATR(data)
+    print(sma)
     # print(sma.dtypes)
-    data.plot(kind='line',y='open', color='red', )
+    sma.plot(kind='line', color='red', )
     plt.show()
     # print(talib.get_function_groups())
     return 0
