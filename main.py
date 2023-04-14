@@ -91,12 +91,12 @@ def net_strategy():
                 avg = float(position['result']['list'][0]['avgPrice'])
                 if position['result']['list'][0]['side'] == 'Sell' and float(position['result']['list'][0]['takeProfit']) != avg-0.00025:
                     try:
-                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg-0.00025)))
+                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit="%.5f" % (avg-0.00025)))
                     except pybit.exceptions.InvalidRequestError as e:
                         logging.warning(e)
                 if position['result']['list'][0]['side'] == 'Buy' and float(position['result']['list'][0]['takeProfit']) != avg+0.00025:
                     try:
-                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg+0.00025)))
+                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit="%.5f" % (avg+0.00025)))
                     except pybit.exceptions.InvalidRequestError as e:
                         logging.warning(e)
                 if position['result']['list'][0]['side'] == 'None':
