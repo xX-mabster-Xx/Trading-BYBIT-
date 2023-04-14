@@ -4,6 +4,7 @@ import time
 
 from CONFIG import API_KEY, API_SECRET, API_KEY2, API_SECRET2
 from bybit import Bybit_v5, create_batch_order
+import pybit.exceptions
 from trade import solve
 from traderequests import buy, sell
 import logging
@@ -66,21 +67,36 @@ def net_strategy():
             logging.info(buy)
             logging.info(sell)
             qty *= 2
+        started = False
         while True:
-            position = pb.get_position_info()
-            if position['result']['list'][0]['side'] == 'Sell' and len(buy_orders) > 0:
-                for order in buy_orders:
-                    pb.cancel_order(symbol='RENUSDT', orderId=order)
-            if position['result']['list'][0]['side'] == 'Buy' and len(sell_orders) > 0:
-                for order in sell_orders:
-                    pb.cancel_order(symbol='RENUSDT', orderId=order)
-            avg = float(position['result']['list'][0]['avgPrice'])
-            if position['result']['list'][0]['side'] == 'Sell' and float(position['result']['list'][0]['takeProfit']) != avg-0.00025:
-                print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg-0.00025)))
-            if position['result']['list'][0]['side'] == 'Buy' and float(position['result']['list'][0]['takeProfit']) != avg+0.00025:
-                print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg+0.00025)))
-            if position['result']['list'][0]['side'] == 'None':
-                break
+            position = pb.get_position_info('RENUSDT', 15)
+            if not started:
+                if position['result']['list'][0]['side'] == 'Sell' and len(buy_orders) > 0:
+                    started = True
+                    for order in buy_orders:
+                        pb.cancel_order(symbol='RENUSDT', orderId=order)
+                if position['result']['list'][0]['side'] == 'Buy' and len(sell_orders) > 0:
+                    started = True
+                    for order in sell_orders:
+                        pb.cancel_order(symbol='RENUSDT', orderId=order)
+            else:
+                avg = float(position['result']['list'][0]['avgPrice'])
+                if position['result']['list'][0]['side'] == 'Sell' and float(position['result']['list'][0]['takeProfit']) != avg-0.00025:
+                    print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg-0.00025)))
+                if position['result']['list'][0]['side'] == 'Buy' and float(position['result']['list'][0]['takeProfit']) != avg+0.00025:
+                    print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(avg+0.00025)))
+                if position['result']['list'][0]['side'] == 'None':
+                    for order in sell_orders:
+                        try:
+                            pb.cancel_order(symbol='RENUSDT', orderId=order)
+                        except pybit.exceptions.InvalidRequestError:
+                            pass
+                    for order in buy_orders:
+                        try:
+                            pb.cancel_order(symbol='RENUSDT', orderId=order)
+                        except pybit.exceptions.InvalidRequestError:
+                            pass
+                    break
             time.sleep(5)
 
 if __name__ == '__main__':
