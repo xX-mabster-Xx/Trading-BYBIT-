@@ -12,6 +12,8 @@ import time
 import requests
 import urllib3
 
+from CONFIG import API_KEY2, API_SECRET2
+
 
 def create_batch_order(symbol: str, side: str, qty: float, prices: list,
                      orderType: str = 'Limit', category='inverse'):
@@ -226,3 +228,12 @@ class Bybit_v5:
             **kwargs
         )
         return response
+
+    def get_balance(self, **kwargs):
+        return self.session.get_wallet_balance(
+            **kwargs
+        )
+
+if __name__ == '__main__':
+    pb = Bybit_v5(API_KEY2, API_SECRET2)
+    print(pb.get_balance(accountType='CONTRACT', coin='USDT')['result']['list'][0]['coin'][0]['walletBalance'])

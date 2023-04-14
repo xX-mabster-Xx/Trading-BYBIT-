@@ -111,6 +111,8 @@ def net_strategy():
                             pb.cancel_order(symbol='RENUSDT', orderId=order)
                         except pybit.exceptions.InvalidRequestError:
                             pass
+                    print('--------', pb.get_balance(accountType='CONTRACT', coin='USDT')['result']['list'][0]['coin'][0][
+                              'walletBalance'])
                     break
             time.sleep(5)
 
