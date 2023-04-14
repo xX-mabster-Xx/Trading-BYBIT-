@@ -48,8 +48,9 @@ def main():
 
 
 def net_strategy():
-    # print(pb.get_position_info('RENUSDT', 20))
-    #
+    if pb.get_position_info('RENUSDT', 20)['result']['list'][0]['side'] == 'None':
+        return
+
     while True:
         price = float(pb.get_kline('RENUSDT', 15, 1)['result']['list'][0][4])
         qty = 0.1
