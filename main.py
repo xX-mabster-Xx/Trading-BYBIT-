@@ -55,12 +55,20 @@ def net_strategy():
         qty = 0.1
         buy_orders = []
         sell_orders = []
+        buy_sum = 0
+        sell_sum = 0
+        sum_qty = 0
         for i in range(14):
+            sum_qty += qty
+            buy_sum += float("%.5f" % (price - 0.0002 - i * 0.00025)) * qty
+            sell_sum += float("%.5f" % (price + 0.0002 + i * 0.00025)) * qty
             buy = pb.create_order(symbol='RENUSDT', side='Buy', qty=str(qty),
                                   price=str(float("%.5f" % (price - 0.0002 - i * 0.00025))),
+                                  takeProfit = "%.5f" % (buy_sum / sum_qty + 0.00025),
                                   category='inverse', orderType='Limit')
             sell = pb.create_order(symbol='RENUSDT', side='Sell', qty=str(qty),
                                    price=str(float("%.5f" % (price + 0.0002 + i * 0.00025))),
+                                   takeProfit="%.5f" % (sell_sum / sum_qty - 0.00025),
                                    category='inverse', orderType='Limit')
             buy_orders.append(buy['result']['orderId'])
             sell_orders.append(sell['result']['orderId'])
