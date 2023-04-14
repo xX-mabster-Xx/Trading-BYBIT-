@@ -1,17 +1,41 @@
 # # from pybit import usdt_perpetual
-# from pybit.unified_trading import HTTP
+from pybit.unified_trading import HTTP
 # # import pybit.
 import datetime
 import hashlib
 import hmac
+import json
 import time
 
 # from CONFIG import API_KEY, API_SECRET, API_KEY2, API_SECRET2
 
 import requests
+import urllib3
 
 
-class Bybit:
+def create_batch_order(symbol: str, side: str, qty: float, prices: list,
+                     orderType: str = 'Limit', category='inverse'):
+
+    order = {
+        "category": category,
+        "request": [
+            {
+                "symbol": symbol,
+                "side": side,
+                "orderType": orderType,
+                "qty": str(qty),
+                "price": str(i),
+                "timeInForce": "GTC",
+                "positionIdx": 0,
+                "orderLinkId": f"test{int(i * 10000)}",
+                "reduceOnly": False,
+                "mmp": False
+            }
+         for i in prices]
+    }
+    return order
+
+class Bybit_v3:
     def __init__(self, API_KEY: str, API_SECRET: str):
         self.API_KEY = API_KEY
         self.API_SECRET = API_SECRET
@@ -32,7 +56,6 @@ class Bybit:
         sl = 'null' if sl is None else ('\"' + str(sl) + '\"')
         tp = 'null' if tp is None else ('\"' + str(tp) + '\"')
         triggerDirection = 'null' if triggerDirection is None else triggerDirection
-
         payload = "{\n " + \
          f"\"category\": \"{category}\",\n \
          \"symbol\": \"{symbol}\",\n \
@@ -55,7 +78,7 @@ class Bybit:
          \"reduceOnly\": false,\n \
          \"closeOnTrigger\": false,\n \
          \"mmp\": null\n"+"}"
-        print(payload)
+        # print(payload)
         time_stamp, signature = self.genSignature(payload)
         headers = {
             'X-BAPI-API-KEY': self.API_KEY,
@@ -119,4 +142,87 @@ class Bybit:
         response = requests.request("POST", "https://api.bybit.com/v5/order/cancel", headers=headers, data=payload)
 
         return response.json()
+    def get_kline(self, symbol: str, interval: int, limit: int, category='inverse'):
+        url = f"https://api.bybit.com/v5/market/index-price-kline/?category={category}&symbol={symbol}&interval={interval}&limit={limit}"
+        payload = {}
+        headers = {}
+        response = requests.request("GET", url, headers=headers, data=payload)
 
+        return response
+
+    def get_position_info(self,symbol:str, limit:int, category:str = 'inverse'):
+        session = HTTP(
+            testnet=False,
+            api_key=self.API_KEY,
+            api_secret=self.API_SECRET,
+        )
+        return session.get_positions(
+            category=category,
+            symbol=symbol,
+        )
+
+def to_str(x):
+    if x is not None:
+        return str(x)
+    else:
+        return None
+class Bybit_v5:
+    def __init__(self, API_KEY: str, API_SECRET: str):
+        self.API_KEY = API_KEY
+        self.API_SECRET = API_SECRET
+        self.session = HTTP(
+            testnet=False,
+            api_key=self.API_KEY,
+            api_secret=self.API_SECRET,
+        )
+
+    def create_order(self, **kwargs):
+        response = self.session.place_order(**kwargs)
+        return response
+
+    def amend_order(self, symbol: str, qty: float, price: float, orderId: str,
+                     tp: float = None, sl: float = None, triggerPrice: float = None, category='inverse'):
+        response = self.session.amend_order(
+            category=category,
+            orderId=orderId,
+            symbol=symbol,
+            triggerPrice=triggerPrice,
+            qty=to_str(qty),
+            price=to_str(price),
+            takeProfit=to_str(tp),
+            stopLoss=to_str(sl),
+        )
+
+        return response
+
+    def cancel_order(self, symbol: str, orderId: str, category='inverse'):
+        response = self.session.cancel_order(
+            category= category,
+            symbol=symbol,
+            orderId=orderId,
+        )
+        return response
+    def get_kline(self, symbol: str, interval: int, limit: int, category='inverse'):
+        response = self.session.get_index_price_kline(
+            category= category,
+            symbol= symbol,
+            interval=interval,
+            limit=limit,
+        )
+        return response
+
+    def get_position_info(self,symbol:str, limit:int, category:str = 'inverse'):
+        session = HTTP(
+            testnet=False,
+            api_key=self.API_KEY,
+            api_secret=self.API_SECRET,
+        )
+        return session.get_positions(
+            category=category,
+            symbol=symbol,
+        )
+    def set_position(self, **kwargs):
+        response = self.session.set_trading_stop(
+            **kwargs
+        )
+        return response
