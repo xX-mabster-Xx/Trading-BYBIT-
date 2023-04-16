@@ -47,19 +47,20 @@ def main():
     pass
 
 
-def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step: float = 0.00025, float_digits: int = 5):
+def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step: float = 0.00025, float_digits: int = 5,
+                 qty1: float = 0.3, steps: int = 14):
     if pb.get_position_info(symbol, 20)['result']['list'][0]['side'] != 'None':
         return
 
     while work:
         price = float(pb.get_kline(symbol, 15, 1)['result']['list'][0][4])
-        qty = 0.1
+        qty = qty1
         buy_orders = []
         sell_orders = []
         buy_sum = 0
         sell_sum = 0
         sum_qty = 0
-        for i in range(14):
+        for i in range(steps):
             sum_qty += qty
             buy_sum += float(f"%.{float_digits}f" % (price - space_to_start - i * step)) * qty
             sell_sum += float(f"%.{float_digits}f" % (price + space_to_start + i * step)) * qty
