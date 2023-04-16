@@ -1,4 +1,6 @@
 # # from pybit import usdt_perpetual
+import logging
+
 from pybit.unified_trading import HTTP
 # # import pybit.
 import datetime
@@ -180,6 +182,8 @@ class Bybit_v5:
 
     def create_order(self, **kwargs):
         response = self.session.place_order(**kwargs)
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
         return response
 
     def amend_order(self, symbol: str, qty: float, price: float, orderId: str,
@@ -195,6 +199,8 @@ class Bybit_v5:
             stopLoss=to_str(sl),
         )
 
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
         return response
 
     def cancel_order(self, symbol: str, orderId: str, category='inverse'):
@@ -203,6 +209,8 @@ class Bybit_v5:
             symbol=symbol,
             orderId=orderId,
         )
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
         return response
     def get_kline(self, symbol: str, interval: int, limit: int, category='inverse'):
         response = self.session.get_index_price_kline(
@@ -211,28 +219,34 @@ class Bybit_v5:
             interval=interval,
             limit=limit,
         )
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
         return response
 
     def get_position_info(self,symbol:str, limit:int, category:str = 'inverse'):
-        session = HTTP(
-            testnet=False,
-            api_key=self.API_KEY,
-            api_secret=self.API_SECRET,
-        )
-        return session.get_positions(
+
+        response =  self.session.get_positions(
             category=category,
             symbol=symbol,
         )
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
+        return response
     def set_position(self, **kwargs):
         response = self.session.set_trading_stop(
             **kwargs
         )
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
         return response
 
     def get_balance(self, **kwargs):
-        return self.session.get_wallet_balance(
+        response =  self.session.get_wallet_balance(
             **kwargs
         )
+        if type(response) is dict and 'ret_msg' in response and response['ret_msg'] == 'Too many visits!':
+            logging.warning('SPEED LIMIT!!!!')
+        return response
 
 if __name__ == '__main__':
     pb = Bybit_v5(API_KEY2, API_SECRET2)

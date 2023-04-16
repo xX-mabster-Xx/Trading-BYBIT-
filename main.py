@@ -9,13 +9,13 @@ from trade import solve
 from traderequests import buy, sell
 import logging
 logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
-                    level=logging.INFO)
+                    level=logging.WARNING)
 
 indexes = ['BTCUSDT.P', 'RENUSDT.P']
 amounts = {'BTCUSDT.P': 0,
            'RENUSDT.P': 0}
 
-
+work = True
 def summ(res: float, amount: float) -> float:
     pass
 
@@ -47,12 +47,12 @@ def main():
     pass
 
 
-def net_strategy():
-    if pb.get_position_info('RENUSDT', 20)['result']['list'][0]['side'] == 'None':
+def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step: float = 0.00025, float_digits: int = 5):
+    if pb.get_position_info(symbol, 20)['result']['list'][0]['side'] != 'None':
         return
 
-    while True:
-        price = float(pb.get_kline('RENUSDT', 15, 1)['result']['list'][0][4])
+    while work:
+        price = float(pb.get_kline(symbol, 15, 1)['result']['list'][0][4])
         qty = 0.1
         buy_orders = []
         sell_orders = []
@@ -61,15 +61,15 @@ def net_strategy():
         sum_qty = 0
         for i in range(14):
             sum_qty += qty
-            buy_sum += float("%.5f" % (price - 0.0002 - i * 0.00025)) * qty
-            sell_sum += float("%.5f" % (price + 0.0002 + i * 0.00025)) * qty
-            buy = pb.create_order(symbol='RENUSDT', side='Buy', qty=str(qty),
-                                  price=str(float("%.5f" % (price - 0.0002 - i * 0.00025))),
-                                  takeProfit = "%.5f" % (buy_sum / sum_qty + 0.00025),
+            buy_sum += float(f"%.{float_digits}f" % (price - space_to_start - i * step)) * qty
+            sell_sum += float(f"%.{float_digits}f" % (price + space_to_start + i * step)) * qty
+            buy = pb.create_order(symbol=symbol, side='Buy', qty=str(qty),
+                                  price=str(float(f"%.{float_digits}f" % (price - space_to_start - i * step))),
+                                  takeProfit = f"%.{float_digits}f" % (buy_sum / sum_qty + step),
                                   category='inverse', orderType='Limit')
-            sell = pb.create_order(symbol='RENUSDT', side='Sell', qty=str(qty),
-                                   price=str(float("%.5f" % (price + 0.0002 + i * 0.00025))),
-                                   takeProfit="%.5f" % (sell_sum / sum_qty - 0.00025),
+            sell = pb.create_order(symbol=symbol, side='Sell', qty=str(qty),
+                                   price=str(float(f"%.{float_digits}f" % (price + space_to_start + i * step))),
+                                   takeProfit=f"%.{float_digits}f" % (sell_sum / sum_qty - step),
                                    category='inverse', orderType='Limit')
             buy_orders.append(buy['result']['orderId'])
             sell_orders.append(sell['result']['orderId'])
@@ -78,37 +78,37 @@ def net_strategy():
             qty *= 2
         started = False
         while True:
-            position = pb.get_position_info('RENUSDT', 15)
+            position = pb.get_position_info(symbol, 15)
             if not started:
                 if position['result']['list'][0]['side'] == 'Sell' and len(buy_orders) > 0:
                     started = True
                     for order in buy_orders:
-                        pb.cancel_order(symbol='RENUSDT', orderId=order)
+                        pb.cancel_order(symbol=symbol, orderId=order)
                 if position['result']['list'][0]['side'] == 'Buy' and len(sell_orders) > 0:
                     started = True
                     for order in sell_orders:
-                        pb.cancel_order(symbol='RENUSDT', orderId=order)
+                        pb.cancel_order(symbol=symbol, orderId=order)
             else:
                 avg = float(position['result']['list'][0]['avgPrice'])
-                if position['result']['list'][0]['side'] == 'Sell' and float(position['result']['list'][0]['takeProfit']) != avg-0.00025:
+                if position['result']['list'][0]['side'] == 'Sell' and f"%.{float_digits}f" % (float(position['result']['list'][0]['takeProfit'])) != f"%.{float_digits}f" % (avg-step):
                     try:
-                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit="%.5f" % (avg-0.00025)))
+                        logging.info(pb.set_position(symbol=symbol, category='inverse', positionIdx=0, takeProfit=f"%.{float_digits}f" % (avg-step)))
                     except pybit.exceptions.InvalidRequestError as e:
                         logging.warning(e)
-                if position['result']['list'][0]['side'] == 'Buy' and float(position['result']['list'][0]['takeProfit']) != avg+0.00025:
+                if position['result']['list'][0]['side'] == 'Buy' and f"%.{float_digits}f" % (float(position['result']['list'][0]['takeProfit'])) != f"%.{float_digits}f" % (avg+step):
                     try:
-                        print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit="%.5f" % (avg+0.00025)))
+                        logging.info(pb.set_position(symbol=symbol, category='inverse', positionIdx=0, takeProfit=f"%.{float_digits}f" % (avg+step)))
                     except pybit.exceptions.InvalidRequestError as e:
                         logging.warning(e)
                 if position['result']['list'][0]['side'] == 'None':
                     for order in sell_orders:
                         try:
-                            pb.cancel_order(symbol='RENUSDT', orderId=order)
+                            pb.cancel_order(symbol=symbol, orderId=order)
                         except pybit.exceptions.InvalidRequestError:
                             pass
                     for order in buy_orders:
                         try:
-                            pb.cancel_order(symbol='RENUSDT', orderId=order)
+                            pb.cancel_order(symbol=symbol, orderId=order)
                         except pybit.exceptions.InvalidRequestError:
                             pass
                     print('--------', pb.get_balance(accountType='CONTRACT', coin='USDT')['result']['list'][0]['coin'][0][
@@ -116,10 +116,22 @@ def net_strategy():
                     break
             time.sleep(5)
 
+# async def commands():
+#     while True:
+#         command = await loop.run_in_executor(None, input, 'command: ')
+#         if command.lower() == 'stop':
+#             work = False
+#         if command.lower() == 'bebra':
+#             print('bobus')
+
 if __name__ == '__main__':
     pb = Bybit_v5(API_KEY2, API_SECRET2)
+    work = True
     # print(pb.get_position_info('NEARUSDT', 15))
     # print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(0.1059)))
+    # loop = asyncio.get_event_loop()
+    # tasks = [loop.create_task(net_strategy()),
+    #          loop.create_task(commands())]
+    # loop.run_until_complete(asyncio.wait(tasks))
     net_strategy()
-
 
