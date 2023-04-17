@@ -136,7 +136,7 @@ if __name__ == '__main__':
     work = True
     # print(pb.get_position_info('NEARUSDT', 15))
     # print(pb.set_position(symbol='RENUSDT', category='inverse', positionIdx=0, takeProfit=str(0.1059)))
-    # loop = asyncio.get_event_loop()
+    # loop = asyncio.get_event_ loop()
     # tasks = [loop.create_task(net_strategy()),
     #          loop.create_task(commands())]
     # loop.run_until_complete(asyncio.wait(tasks))
