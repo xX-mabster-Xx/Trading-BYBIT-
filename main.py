@@ -48,12 +48,12 @@ def main():
 
 
 def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step: float = 0.00025, float_digits: int = 5,
-                 qty1: float = 0.3, steps: int = 14):
+                 qty1: float = 0.3, steps: int = 14, eps: float = 0.00003):
     if pb.get_position_info(symbol, 20)['result']['list'][0]['side'] != 'None':
         return
 
     while work:
-        price = float(pb.get_kline(symbol, 15, 1)['result']['list'][0][4])
+        price = float(pb.get_kline(symbol, 15, 1)['result']['list'][0][4])+eps
         qty = qty1
         buy_orders = []
         sell_orders = []
@@ -121,7 +121,7 @@ def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step:
                     print('--------', pb.get_balance(accountType='CONTRACT', coin='USDT')['result']['list'][0]['coin'][0][
                               'walletBalance'])
                     break
-            time.sleep(5)
+            time.sleep(3)
 
 # async def commands():
 #     while True:
@@ -140,5 +140,8 @@ if __name__ == '__main__':
     # tasks = [loop.create_task(net_strategy()),
     #          loop.create_task(commands())]
     # loop.run_until_complete(asyncio.wait(tasks))
+    set1 = {"steps": 7, "qty1": 38.4, "step": 0.0005}
+    set2 = {"steps": 14, "qty1": 0.3, "step": 0.00025}
+    set3 = {"steps": 15, "qty1": 0.1, "step": 0.00025}
     net_strategy()
 
