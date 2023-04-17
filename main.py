@@ -84,11 +84,17 @@ def net_strategy(symbol: str = 'RENUSDT', space_to_start: float = 0.00015, step:
                 if position['result']['list'][0]['side'] == 'Sell' and len(buy_orders) > 0:
                     started = True
                     for order in buy_orders:
-                        pb.cancel_order(symbol=symbol, orderId=order)
+                        try:
+                            pb.cancel_order(symbol=symbol, orderId=order)
+                        except pybit.exceptions.InvalidRequestError:
+                            pass
                 if position['result']['list'][0]['side'] == 'Buy' and len(sell_orders) > 0:
                     started = True
                     for order in sell_orders:
-                        pb.cancel_order(symbol=symbol, orderId=order)
+                        try:
+                            pb.cancel_order(symbol=symbol, orderId=order)
+                        except pybit.exceptions.InvalidRequestError:
+                            pass
             else:
                 avg = float(position['result']['list'][0]['avgPrice'])
                 if position['result']['list'][0]['side'] == 'Sell' and f"%.{float_digits}f" % (float(position['result']['list'][0]['takeProfit'])) != f"%.{float_digits}f" % (avg-step):
